@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 export type EmotionType = 'happy' | 'sad' | 'angry' | 'surprised' | 'neutral' | 'disgusted' | 'fearful';
 
@@ -12,16 +12,14 @@ interface EmotionScores {
   fearful: number;
 }
 
-export function useEmotionDetection(videoRef: React.RefObject<HTMLVideoElement>) {
-  const [emotion, setEmotion] = useState<EmotionType>('neutral');
-  const [confidence, setConfidence] = useState<number>(0);
+export function useEmotionDetection() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const faceapiRef = useRef<any>(null);
-  const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load models on mount
   useEffect(() => {
+    let isMounted = true;
     const loadModels = async () => {
       try {
         console.log('[v0] Loading face-api models...');
@@ -33,73 +31,53 @@ export function useEmotionDetection(videoRef: React.RefObject<HTMLVideoElement>)
           faceapi.nets.faceExpressionNet.loadFromUri('/models'),
         ]);
         
-        console.log('[v0] Models loaded successfully');
-        setIsLoading(false);
+        if (isMounted) {
+          console.log('[v0] Models loaded successfully');
+          setIsLoading(false);
+        }
       } catch (err) {
-        console.error('[v0] Model loading error:', err);
-        setError('Failed to load ML models');
-        setIsLoading(false);
+        if (isMounted) {
+          console.error('[v0] Model loading error:', err);
+          setError('Failed to load ML models');
+          setIsLoading(false);
+        }
       }
     };
 
     loadModels();
 
     return () => {
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
-      }
+      isMounted = false;
     };
   }, []);
 
-  // Detect emotions from video
-  useEffect(() => {
-    if (!faceapiRef.current || !videoRef.current) {
-      return;
+  const detectEmotionFromImage = useCallback(async (
+    imageElement: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  ): Promise<{ emotion: EmotionType; confidence: number } | null> => {
+    if (!faceapiRef.current) return null;
+
+    try {
+      const detection = await faceapiRef.current
+        .detectSingleFace(imageElement, new faceapiRef.current.TinyFaceDetectorOptions())
+        .withFaceExpressions();
+
+      if (detection?.expressions) {
+        const expressions = detection.expressions as EmotionScores;
+
+        const topEmotion = Object.entries(expressions).reduce((prev, current) =>
+          current[1] > prev[1] ? current : prev
+        ) as [EmotionType, number];
+
+        return {
+          emotion: topEmotion[0],
+          confidence: Math.round(topEmotion[1] * 100),
+        };
+      }
+    } catch (err) {
+      console.error('[v0] Detection error:', err);
     }
+    return null;
+  }, []);
 
-    let isMounted = true;
-
-    const detectEmotion = async () => {
-      if (!videoRef.current || videoRef.current.readyState < 2) {
-        return;
-      }
-
-      try {
-        const detection = await faceapiRef.current
-          .detectSingleFace(videoRef.current, new faceapiRef.current.TinyFaceDetectorOptions())
-          .withFaceExpressions();
-
-        if (!isMounted) return;
-
-        if (detection?.expressions) {
-          const expressions = detection.expressions as EmotionScores;
-          
-          const topEmotion = Object.entries(expressions).reduce((prev, current) =>
-            current[1] > prev[1] ? current : prev
-          ) as [EmotionType, number];
-
-          console.log('[v0] Emotion:', topEmotion[0], 'Confidence:', (topEmotion[1] * 100).toFixed(1) + '%');
-          setEmotion(topEmotion[0]);
-          setConfidence(Math.round(topEmotion[1] * 100));
-        }
-      } catch (err) {
-        console.error('[v0] Detection error:', err);
-      }
-    };
-
-    if (isLoading) {
-      return;
-    }
-
-    detectionIntervalRef.current = setInterval(detectEmotion, 500);
-
-    return () => {
-      isMounted = false;
-      if (detectionIntervalRef.current) {
-        clearInterval(detectionIntervalRef.current);
-      }
-    };
-  }, [isLoading]);
-
-  return { emotion, confidence, isLoading, error };
+  return { detectEmotionFromImage, isLoading, error };
 }
