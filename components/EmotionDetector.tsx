@@ -22,6 +22,9 @@ export function EmotionDetector() {
 
   // Initialize webcam
   useEffect(() => {
+    let activeStream: MediaStream | null = null;
+    let isMounted = true;
+
     const startWebcam = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -29,28 +32,34 @@ export function EmotionDetector() {
           audio: false,
         });
 
+        if (!isMounted) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
+        activeStream = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setPermission('granted');
         }
       } catch (err) {
-        console.error('[v0] Webcam error:', err);
-        setPermission('denied');
-        setCameraError('Camera permission denied. Please enable it in your browser settings.');
+        if (isMounted) {
+          console.error('[v0] Webcam error:', err);
+          setPermission('denied');
+          setCameraError('Camera permission denied. Please enable it in your browser settings.');
+        }
       }
     };
 
-    if (permission === 'idle') {
-      startWebcam();
-    }
+    startWebcam();
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => track.stop());
+      isMounted = false;
+      if (activeStream) {
+        activeStream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [permission]);
+  }, []);
 
   // Check if video is playing
   useEffect(() => {
@@ -147,7 +156,7 @@ export function EmotionDetector() {
               className="w-full h-full object-cover"
             />
             {isModelsLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
                 <p className="text-white text-sm font-semibold animate-pulse">Loading AI models...</p>
               </div>
             )}
