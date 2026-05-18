@@ -24,7 +24,6 @@ export function EmotionDetector() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setPermission('granted');
-          console.log('[v0] Camera stream started');
         }
       } catch (err) {
         console.error('[v0] Webcam error:', err);
@@ -50,9 +49,9 @@ export function EmotionDetector() {
     if (permission !== 'granted') return;
 
     const checkPlayback = setInterval(() => {
-      if (videoRef.current && videoRef.current.readyState === 4 && !videoRef.current.paused) {
-        setIsVideoPlaying(true);
-      }
+        if (videoRef.current && videoRef.current.readyState >= 2) {
+          setIsVideoPlaying(true);
+        }
     }, 100);
 
     return () => clearInterval(checkPlayback);
@@ -90,14 +89,13 @@ export function EmotionDetector() {
           playsInline
           muted
           onLoadedMetadata={() => {
-            console.log('[v0] Video metadata loaded, attempting to play');
-            videoRef.current?.play().catch((err) => console.error('[v0] Play error:', err));
+            videoRef.current?.play().catch(() => {});
           }}
           className="w-full h-full object-cover"
         />
 
         {/* Emoji Overlay */}
-        {!isLoading && isVideoPlaying && (
+        {isVideoPlaying && (
           <div
             className="absolute top-4 right-4 text-8xl drop-shadow-lg transition-transform duration-300 ease-out"
             style={{
@@ -120,7 +118,7 @@ export function EmotionDetector() {
       </div>
 
       {/* Stats Display */}
-      {!isLoading && isVideoPlaying && (
+      {isVideoPlaying && (
         <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-6 rounded-lg border border-slate-200 max-w-md mx-auto w-full">
           <div className="space-y-3">
             <div>
