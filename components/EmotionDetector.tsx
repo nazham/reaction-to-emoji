@@ -61,13 +61,13 @@ export function EmotionDetector() {
         </div>
       )}
 
-      <div className="relative w-full max-w-md mx-auto">
+      <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-lg shadow-lg overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-auto bg-black rounded-lg shadow-lg"
+          className="w-full h-full object-cover"
         />
 
         {/* Emoji Overlay */}
