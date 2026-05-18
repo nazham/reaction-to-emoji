@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { useEmotionDetection, type EmotionType } from '@/hooks/useEmotionDetection';
-import { getEmojiForEmotion } from '@/lib/emotionEmoji';
+import { useEmotionDetection } from '@/hooks/useEmotionDetection';
+import { determineAdvancedEmoji, ExtendedEmojiType } from '@/lib/emotionEmoji';
 import { Camera, RefreshCw } from 'lucide-react';
 
 export function EmotionDetector() {
@@ -14,7 +14,8 @@ export function EmotionDetector() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const [snapshot, setSnapshot] = useState<string | null>(null);
-  const [detectedEmotion, setDetectedEmotion] = useState<EmotionType | null>(null);
+  const [detectedEmotion, setDetectedEmotion] = useState<ExtendedEmojiType | null>(null);
+  const [emojiChar, setEmojiChar] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -79,6 +80,7 @@ export function EmotionDetector() {
 
     setIsProcessing(true);
     setDetectedEmotion(null);
+    setEmojiChar(null);
     setConfidence(null);
 
     const video = videoRef.current;
@@ -101,7 +103,9 @@ export function EmotionDetector() {
         const result = await detectEmotionFromImage(img);
 
         if (result) {
-          setDetectedEmotion(result.emotion);
+          const advancedEmotion = determineAdvancedEmoji(result.expressions, result.landmarks, result.emotion);
+          setDetectedEmotion(advancedEmotion.emojiType);
+          setEmojiChar(advancedEmotion.emojiChar);
           setConfidence(result.confidence);
         }
         setIsProcessing(false);
@@ -112,6 +116,7 @@ export function EmotionDetector() {
   const handleRetake = () => {
     setSnapshot(null);
     setDetectedEmotion(null);
+    setEmojiChar(null);
     setConfidence(null);
   };
 
@@ -186,7 +191,7 @@ export function EmotionDetector() {
                      className="absolute top-4 right-4 text-6xl md:text-8xl drop-shadow-lg transition-transform duration-500 scale-in"
                      style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}
                    >
-                     {getEmojiForEmotion(detectedEmotion)}
+                     {emojiChar}
                    </div>
                 ) : !isProcessing ? (
                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
