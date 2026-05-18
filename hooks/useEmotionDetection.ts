@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 export type EmotionType = 'happy' | 'sad' | 'angry' | 'surprised' | 'neutral' | 'disgusted' | 'fearful';
 
-interface EmotionScores {
+export interface EmotionScores {
   happy: number;
   sad: number;
   angry: number;
@@ -28,6 +28,7 @@ export function useEmotionDetection() {
         
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
           faceapi.nets.faceExpressionNet.loadFromUri('/models'),
         ]);
         
@@ -53,12 +54,13 @@ export function useEmotionDetection() {
 
   const detectEmotionFromImage = useCallback(async (
     imageElement: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
-  ): Promise<{ emotion: EmotionType; confidence: number } | null> => {
+  ): Promise<{ emotion: EmotionType; confidence: number; expressions: EmotionScores; landmarks: any } | null> => {
     if (!faceapiRef.current) return null;
 
     try {
       const detection = await faceapiRef.current
         .detectSingleFace(imageElement, new faceapiRef.current.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
         .withFaceExpressions();
 
       if (detection?.expressions) {
@@ -71,6 +73,8 @@ export function useEmotionDetection() {
         return {
           emotion: topEmotion[0],
           confidence: Math.round(topEmotion[1] * 100),
+          expressions: expressions,
+          landmarks: detection.landmarks
         };
       }
     } catch (err) {
