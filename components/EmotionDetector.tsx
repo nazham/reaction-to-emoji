@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useEmotionDetection } from '@/hooks/useEmotionDetection';
 import { determineAdvancedEmoji, ExtendedEmojiType } from '@/lib/emotionEmoji';
-import { Camera, RefreshCw } from 'lucide-react';
+import { Camera, RefreshCw, Loader2, AlertCircle, UserX } from 'lucide-react';
 
 export function EmotionDetector() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -123,7 +123,8 @@ export function EmotionDetector() {
   if (permission === 'denied') {
     return (
       <div className="w-full h-96 flex items-center justify-center bg-slate-100 rounded-lg border-2 border-dashed border-slate-400">
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mb-4" />
           <p className="text-red-600 font-semibold">Camera Permission Required</p>
           <p className="text-slate-600 text-sm mt-2">{cameraError}</p>
         </div>
@@ -135,7 +136,7 @@ export function EmotionDetector() {
     <div className="w-full space-y-6">
       {modelsError && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-          {modelsError}
+          <AlertCircle className="w-5 h-5 mr-2 inline-block"/> {modelsError}
         </div>
       )}
 
@@ -150,6 +151,9 @@ export function EmotionDetector() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-slate-800 text-center">Live Camera</h2>
           <div className="relative w-full aspect-video bg-black rounded-lg shadow-lg overflow-hidden flex items-center justify-center">
+            {isProcessing && !snapshot && (
+               <div className="absolute inset-0 bg-white z-20 animate-flash pointer-events-none" />
+            )}
             <video
               ref={videoRef}
               autoPlay
@@ -162,7 +166,10 @@ export function EmotionDetector() {
             />
             {isModelsLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                <p className="text-white text-sm font-semibold animate-pulse">Loading AI models...</p>
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="animate-spin text-white w-8 h-8" />
+                  <p className="text-white text-sm font-medium animate-pulse">Loading AI models...</p>
+                </div>
               </div>
             )}
           </div>
@@ -171,9 +178,9 @@ export function EmotionDetector() {
             <button
               onClick={handleCapture}
               disabled={!isVideoPlaying || isModelsLoading || isProcessing}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:active:scale-100"
             >
-              <Camera size={20} />
+              {isProcessing ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
               {isProcessing ? 'Analyzing...' : 'Take Snapshot'}
             </button>
           </div>
@@ -188,14 +195,15 @@ export function EmotionDetector() {
                 <img src={snapshot} alt="Captured snapshot" className="w-full h-full object-cover" />
                 {detectedEmotion ? (
                    <div
-                     className="absolute top-4 right-4 text-6xl md:text-8xl drop-shadow-lg transition-transform duration-500 scale-in"
+                     className="absolute top-4 right-4 text-5xl sm:text-7xl md:text-9xl drop-shadow-lg transition-transform duration-500 scale-in"
                      style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}
                    >
                      {emojiChar}
                    </div>
                 ) : !isProcessing ? (
-                   <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                     <p className="text-white bg-black/60 px-4 py-2 rounded-lg font-medium">No face detected</p>
+                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 gap-3">
+                     <UserX className="w-12 h-12 text-white opacity-80" />
+                     <p className="text-white bg-black/60 px-4 py-2 rounded-lg font-medium shadow-sm">No face detected</p>
                    </div>
                 ) : null}
               </>
@@ -273,6 +281,17 @@ export function EmotionDetector() {
             transform: scale(1);
             opacity: 1;
           }
+        }
+        @keyframes flash {
+          0% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+        .animate-flash {
+          animation: flash 0.4s ease-out forwards;
         }
         .scale-in {
           animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
