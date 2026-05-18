@@ -45,18 +45,27 @@ export function useEmotionDetection(videoRef: React.RefObject<HTMLVideoElement>)
 
   // Detect emotions from video
   useEffect(() => {
-    if (!modelsLoadedRef.current || !videoRef.current) return;
+    if (!modelsLoadedRef.current) {
+      console.log('[v0] Waiting for models to load...');
+      return;
+    }
 
     let isMounted = true;
 
     const detectEmotion = async () => {
+      if (!videoRef.current || videoRef.current.readyState !== 4) {
+        return;
+      }
+
       try {
         const faceapi = await import('@vladmandic/face-api');
         const detection = await faceapi
           .detectSingleFace(videoRef.current!, new faceapi.TinyFaceDetectorOptions())
           .withFaceExpressions();
 
-        if (detection && detection.expressions && isMounted) {
+        if (!isMounted) return;
+
+        if (detection && detection.expressions) {
           const expressions = detection.expressions as EmotionScores;
           
           // Find the emotion with highest confidence
@@ -64,17 +73,19 @@ export function useEmotionDetection(videoRef: React.RefObject<HTMLVideoElement>)
             current[1] > prev[1] ? current : prev
           ) as [EmotionType, number];
 
-          console.log('[v0] Detected emotion:', topEmotion[0], 'Confidence:', topEmotion[1]);
+          console.log('[v0] Detected emotion:', topEmotion[0], 'Confidence:', (topEmotion[1] * 100).toFixed(1) + '%');
           setEmotion(topEmotion[0]);
           setConfidence(Math.round(topEmotion[1] * 100));
         }
       } catch (err) {
-        console.error('[v0] Emotion detection error:', err);
+        if (isMounted) {
+          console.error('[v0] Emotion detection error:', err);
+        }
       }
     };
 
     // Start detection loop
-    detectionIntervalRef.current = setInterval(detectEmotion, 100);
+    detectionIntervalRef.current = setInterval(detectEmotion, 500);
 
     return () => {
       isMounted = false;
@@ -82,7 +93,7 @@ export function useEmotionDetection(videoRef: React.RefObject<HTMLVideoElement>)
         clearInterval(detectionIntervalRef.current);
       }
     };
-  }, [videoRef]);
+  }, []);
 
   return { emotion, confidence, isLoading, error };
 }

@@ -8,9 +8,11 @@ export function EmotionDetector() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [permission, setPermission] = useState<'idle' | 'granted' | 'denied'>('idle');
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const { emotion, confidence, isLoading, error } = useEmotionDetection(videoRef);
   const emoji = getEmojiForEmotion(emotion);
 
+  // Initialize webcam
   useEffect(() => {
     const startWebcam = async () => {
       try {
@@ -22,6 +24,7 @@ export function EmotionDetector() {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setPermission('granted');
+          console.log('[v0] Camera stream started');
         }
       } catch (err) {
         console.error('[v0] Webcam error:', err);
@@ -42,11 +45,24 @@ export function EmotionDetector() {
     };
   }, [permission]);
 
+  // Check if video is playing
+  useEffect(() => {
+    if (permission !== 'granted') return;
+
+    const checkPlayback = setInterval(() => {
+      if (videoRef.current && videoRef.current.readyState === 4 && !videoRef.current.paused) {
+        setIsVideoPlaying(true);
+      }
+    }, 100);
+
+    return () => clearInterval(checkPlayback);
+  }, [permission]);
+
   if (permission === 'denied') {
     return (
       <div className="w-full h-96 flex items-center justify-center bg-slate-100 rounded-lg border-2 border-dashed border-slate-400">
         <div className="text-center">
-          <p className="text-red-600 font-semibold">📹 Camera Permission Required</p>
+          <p className="text-red-600 font-semibold">Camera Permission Required</p>
           <p className="text-slate-600 text-sm mt-2">{cameraError}</p>
         </div>
       </div>
@@ -61,23 +77,33 @@ export function EmotionDetector() {
         </div>
       )}
 
+      {!isVideoPlaying && permission === 'granted' && (
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-600 text-sm">
+          Initializing camera...
+        </div>
+      )}
+
       <div className="relative w-full max-w-md mx-auto aspect-video bg-black rounded-lg shadow-lg overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
+          onLoadedMetadata={() => {
+            console.log('[v0] Video metadata loaded, attempting to play');
+            videoRef.current?.play().catch((err) => console.error('[v0] Play error:', err));
+          }}
           className="w-full h-full object-cover"
         />
 
         {/* Emoji Overlay */}
-        {!isLoading && (
+        {!isLoading && isVideoPlaying && (
           <div
             className="absolute top-4 right-4 text-8xl drop-shadow-lg transition-transform duration-300 ease-out"
             style={{
               textShadow: '0 2px 10px rgba(0,0,0,0.3)',
               filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))',
-              animation: 'pulse 0.6s ease-in-out',
+              animation: 'pulse 0.6s ease-in-out infinite',
             }}
           >
             {emoji}
@@ -94,7 +120,7 @@ export function EmotionDetector() {
       </div>
 
       {/* Stats Display */}
-      {!isLoading && (
+      {!isLoading && isVideoPlaying && (
         <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-6 rounded-lg border border-slate-200 max-w-md mx-auto w-full">
           <div className="space-y-3">
             <div>
