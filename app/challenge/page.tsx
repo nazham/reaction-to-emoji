@@ -1,4 +1,5 @@
 'use client';
+import { playDing } from '@/lib/audio';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useWebcam } from '@/hooks/useWebcam';
@@ -34,7 +35,7 @@ export default function ChallengePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const lastCheckRef = useRef<number>(0);
   const [isSuccessFlash, setIsSuccessFlash] = useState(false);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number>(0);
 
   // Throttled detection loop
   const analyzeFrame = useCallback(async () => {
@@ -42,7 +43,7 @@ export default function ChallengePage() {
 
     const now = Date.now();
     // Throttle to roughly every 300ms (approx 3 FPS)
-    if (now - lastCheckRef.current >= 300) {
+    if (now - lastCheckRef.current >= 250) {
       lastCheckRef.current = now;
 
       const video = videoRef.current;
