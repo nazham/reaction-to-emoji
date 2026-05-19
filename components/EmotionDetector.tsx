@@ -3,15 +3,11 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useEmotionDetection } from '@/hooks/useEmotionDetection';
 import { determineAdvancedEmoji, ExtendedEmojiType } from '@/lib/emotionEmoji';
-import { Camera, RefreshCw } from 'lucide-react';
+import { Camera, RefreshCw, Video, VideoOff } from 'lucide-react';
+import { useWebcam } from '@/hooks/useWebcam';
 
 export function EmotionDetector() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const [permission, setPermission] = useState<'idle' | 'granted' | 'denied'>('idle');
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const [snapshot, setSnapshot] = useState<string | null>(null);
   const [detectedEmotion, setDetectedEmotion] = useState<ExtendedEmojiType | null>(null);
@@ -19,61 +15,22 @@ export function EmotionDetector() {
   const [confidence, setConfidence] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const {
+    videoRef,
+    permission,
+    cameraError,
+    isCameraOn,
+    toggleCamera,
+    isVideoPlaying,
+  } = useWebcam();
+
+
   const { detectEmotionFromImage, isLoading: isModelsLoading, error: modelsError } = useEmotionDetection();
 
-  // Initialize webcam
-  useEffect(() => {
-    let activeStream: MediaStream | null = null;
-    let isMounted = true;
 
-    const startWebcam = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 },
-          audio: false,
-        });
 
-        if (!isMounted) {
-          stream.getTracks().forEach(track => track.stop());
-          return;
-        }
 
-        activeStream = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          setPermission('granted');
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('[v0] Webcam error:', err);
-          setPermission('denied');
-          setCameraError('Camera permission denied. Please enable it in your browser settings.');
-        }
-      }
-    };
-
-    startWebcam();
-
-    return () => {
-      isMounted = false;
-      if (activeStream) {
-        activeStream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
-
-  // Check if video is playing
-  useEffect(() => {
-    if (permission !== 'granted') return;
-
-    const checkPlayback = setInterval(() => {
-        if (videoRef.current && videoRef.current.readyState >= 2) {
-          setIsVideoPlaying(true);
-        }
-    }, 100);
-
-    return () => clearInterval(checkPlayback);
-  }, [permission]);
 
   const handleCapture = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -148,29 +105,47 @@ export function EmotionDetector() {
       <div className="grid md:grid-cols-2 gap-6">
         {/* Live Camera View */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-slate-800 text-center">Live Camera</h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-slate-800">Live Camera</h2>
+            <button
+              onClick={toggleCamera}
+              className={`p-2 rounded-full transition-colors flex items-center justify-center ${isCameraOn ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
+              title={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
+            >
+              {isCameraOn ? <Video size={20} /> : <VideoOff size={20} />}
+            </button>
+          </div>
           <div className="relative w-full aspect-video bg-black rounded-lg shadow-lg overflow-hidden flex items-center justify-center">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              onLoadedMetadata={() => {
-                videoRef.current?.play().catch(() => {});
-              }}
-              className="w-full h-full object-cover"
-            />
-            {isModelsLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                <p className="text-white text-sm font-semibold animate-pulse">Loading AI models...</p>
+            {!isCameraOn ? (
+              <div className="flex flex-col items-center justify-center text-slate-400">
+                <VideoOff size={48} className="mb-2 opacity-50" />
+                <p className="font-medium">Camera is Off</p>
               </div>
+            ) : (
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  onLoadedMetadata={() => {
+                    videoRef.current?.play().catch(() => {});
+                  }}
+                  className="w-full h-full object-cover"
+                />
+                {isModelsLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                    <p className="text-white text-sm font-semibold animate-pulse">Loading AI models...</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
           <div className="flex justify-center">
             <button
               onClick={handleCapture}
-              disabled={!isVideoPlaying || isModelsLoading || isProcessing}
+              disabled={!isVideoPlaying || isModelsLoading || isProcessing || !isCameraOn}
               className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera size={20} />
