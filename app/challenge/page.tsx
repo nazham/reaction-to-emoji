@@ -1,7 +1,7 @@
 'use client';
 import { playDing } from '@/lib/audio';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useWebcam } from '@/hooks/useWebcam';
 import { useReactionGame } from '@/hooks/useReactionGame';
 import { useEmotionDetection } from '@/hooks/useEmotionDetection';
