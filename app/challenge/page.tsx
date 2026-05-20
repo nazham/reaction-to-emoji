@@ -233,7 +233,7 @@ export default function ChallengePage() {
                onLoadedMetadata={() => {
                  videoRef.current?.play().catch(() => {});
                }}
-               className="w-full h-full object-cover -scale-x-100"
+               className="w-full h-full object-contain bg-black -scale-x-100"
              />
              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm sm:text-base px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 z-20 shadow-lg whitespace-nowrap">
                <span role="img" aria-label="locked">🔒</span> 100% Private. Runs locally.
@@ -344,7 +344,7 @@ export default function ChallengePage() {
 
               {previewUrl ? (
                 <div className="w-full aspect-[9/16] rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl mb-8 relative">
-                   <img src={previewUrl} alt="Scorecard Preview" className="w-full h-full object-cover" />
+                   <img src={previewUrl} alt="Scorecard Preview" className="w-full h-full object-contain bg-black" />
                 </div>
               ) : (
                 <div className="w-full aspect-[9/16] rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl mb-8 bg-slate-800 flex items-center justify-center">

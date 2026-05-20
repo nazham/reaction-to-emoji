@@ -1,0 +1,4 @@
+fix(ui): improve game over layout and styling
+
+- Change `object-cover` to `object-contain bg-black` on the image preview
+- Ensures the entire image is shown rather than being clipped by the container
