@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { playBuzz } from '@/lib/audio';
 import { ExtendedEmojiType, extendedEmotionEmojiMap } from '@/lib/emotionEmoji';
 
 export type GameState = 'idle' | 'playing' | 'game_over';
@@ -36,6 +37,7 @@ export function useReactionGame() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
+          playBuzz();
           setGameState('game_over');
           return 0;
         }

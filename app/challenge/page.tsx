@@ -33,6 +33,71 @@ export default function ChallengePage() {
   const { detectEmotionFromImage, isLoading: isModelsLoading, error: modelsError } = useEmotionDetection();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [username, setUsername] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<Array<{member: string, score: number}>>([]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const res = await fetch('/api/leaderboard');
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderboard(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const submitScore = async () => {
+    if (!username.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim(), score })
+      });
+      if (res.ok) {
+        setHasSubmitted(true);
+        fetchLeaderboard();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setIsSubmitting(false);
+  };
+
+  // Check if current score qualifies for top 10
+  const qualifiesForLeaderboard = useMemo(() => {
+    if (score === 0) return false;
+    if (leaderboard.length < 10) return true;
+
+    const sorted = [...leaderboard].sort((a, b) => b.score - a.score);
+    const lowestScore = sorted[sorted.length - 1].score;
+
+    return score > lowestScore;
+  }, [score, leaderboard]);
+
+  useEffect(() => {
+    if (gameState === 'game_over') {
+      fetchLeaderboard();
+      // Small delay to ensure we get a clean final frame
+      setTimeout(() => {
+        handleDownloadScore();
+        if (isCameraOn) {
+            toggleCamera(); // turn off camera
+        }
+      }, 500);
+    } else if (gameState === 'playing' && !isCameraOn) {
+        setHasSubmitted(false);
+        setUsername('');
+        toggleCamera();
+    }
+  }, [gameState]);
+
   const lastCheckRef = useRef<number>(0);
   const [isSuccessFlash, setIsSuccessFlash] = useState(false);
   const animationFrameRef = useRef<number>(0);
@@ -58,6 +123,7 @@ export default function ChallengePage() {
           // It's a match!
           setIsSuccessFlash(true);
           setTimeout(() => setIsSuccessFlash(false), 300);
+          playDing();
           handleMatch();
         }
       }
@@ -111,38 +177,34 @@ export default function ChallengePage() {
         ctx.fill();
     }
 
-    // Draw Score Text
+    // Draw Overlays at top and bottom to keep face clear
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, canvas.width, 180);
+    ctx.fillRect(0, canvas.height - 120, canvas.width, 120);
+
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 120px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetX = 5;
-    ctx.shadowOffsetY = 5;
-
-    ctx.fillText('I scored', canvas.width / 2, canvas.height / 2 - 150);
-
-    ctx.font = 'bold 280px sans-serif';
-    ctx.fillText(`${score}`, canvas.width / 2, canvas.height / 2 + 50);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
 
     ctx.font = 'bold 80px sans-serif';
-    ctx.fillText('in React2Emoji Challenge!', canvas.width / 2, canvas.height / 2 + 250);
+    ctx.fillText(`React2Emoji Challenge`, canvas.width / 2, 60);
 
-    // Draw URL at bottom
+    ctx.font = 'bold 60px sans-serif';
+    ctx.fillStyle = '#fbbf24'; // amber-400
+    ctx.fillText(`Score: ${score}`, canvas.width / 2, 140);
+
+    ctx.fillStyle = '#ffffff';
     ctx.font = '40px sans-serif';
     ctx.shadowColor = 'transparent';
-    ctx.fillText('react2emoji.vercel.app', canvas.width / 2, canvas.height - 100);
+    ctx.fillText('🔒 100% Private - react2emoji.vercel.app', canvas.width / 2, canvas.height - 60);
 
-    // Trigger download
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-    const link = document.createElement('a');
-    link.download = `react2emoji-score-${score}.jpg`;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setPreviewUrl(dataUrl);
   };
 
   return (
@@ -162,16 +224,21 @@ export default function ChallengePage() {
 
         {/* Video Feed */}
         {isCameraOn ? (
-           <video
-             ref={videoRef}
-             autoPlay
-             playsInline
-             muted
-             onLoadedMetadata={() => {
-               videoRef.current?.play().catch(() => {});
-             }}
-             className="w-full h-full object-cover"
-           />
+           <>
+             <video
+               ref={videoRef}
+               autoPlay
+               playsInline
+               muted
+               onLoadedMetadata={() => {
+                 videoRef.current?.play().catch(() => {});
+               }}
+               className="w-full h-full object-cover -scale-x-100"
+             />
+             <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm sm:text-base px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 z-20 shadow-lg whitespace-nowrap">
+               <span role="img" aria-label="locked">🔒</span> 100% Private. Runs locally.
+             </div>
+           </>
         ) : (
            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800 text-slate-400">
              <VideoOff size={64} className="mb-4 opacity-50" />
@@ -271,32 +338,93 @@ export default function ChallengePage() {
         )}
 
         {gameState === 'game_over' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-30 p-6 backdrop-blur-md animate-in fade-in duration-500">
-            <h2 className="text-4xl sm:text-5xl font-black text-white mb-2 uppercase tracking-tight text-center">Time's Up!</h2>
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/95 z-30 p-6 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
+            <div className="w-full max-w-md flex flex-col items-center pb-12 pt-8">
+              <h2 className="text-4xl sm:text-5xl font-black text-white mb-6 uppercase tracking-tight text-center">Time's Up!</h2>
 
-            <div className="bg-white/10 p-8 rounded-3xl border border-white/20 backdrop-blur-lg flex flex-col items-center my-8 w-full max-w-sm">
-              <span className="text-slate-300 font-medium uppercase tracking-widest mb-2">Final Score</span>
-              <span className="text-8xl sm:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-br from-yellow-300 via-orange-400 to-red-500 drop-shadow-sm">
-                {score}
-              </span>
-            </div>
+              {previewUrl ? (
+                <div className="w-full aspect-[9/16] rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl mb-8 relative">
+                   <img src={previewUrl} alt="Scorecard Preview" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-full aspect-[9/16] rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl mb-8 bg-slate-800 flex items-center justify-center">
+                   <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              )}
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
-              <button
-                onClick={handleDownloadScore}
-                className="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-4 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2"
-              >
-                <Download size={20} />
-                Download Score
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 w-full mb-8">
+                <button
+                  onClick={() => {
+                    if (!previewUrl) return;
+                    const link = document.createElement('a');
+                    link.download = `react2emoji-score-${score}.jpg`;
+                    link.href = previewUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  disabled={!previewUrl}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <Download size={20} />
+                  Download & Share
+                </button>
 
-              <button
-                onClick={resetGame}
-                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold py-4 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2"
-              >
-                <RotateCcw size={20} />
-                Play Again
-              </button>
+                <button
+                  onClick={() => {
+                    setPreviewUrl(null);
+                    resetGame();
+                    if (!isCameraOn) toggleCamera();
+                  }}
+                  className="flex-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold py-4 px-6 rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <RotateCcw size={20} />
+                  Play Again
+                </button>
+              </div>
+
+              {/* Leaderboard Section */}
+              <div className="w-full bg-slate-800/80 rounded-2xl border border-white/10 p-6 backdrop-blur-md">
+                <h3 className="text-xl font-bold text-white mb-4 text-center">🏆 Top 10 Players</h3>
+
+                {!hasSubmitted && score > 0 && qualifiesForLeaderboard ? (
+                  <div className="flex gap-2 mb-6">
+                    <input
+                      type="text"
+                      placeholder="Enter your name"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      maxLength={15}
+                      className="flex-1 bg-black/40 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    <button
+                      onClick={submitScore}
+                      disabled={!username.trim() || isSubmitting}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-colors"
+                    >
+                      {isSubmitting ? '...' : 'Submit'}
+                    </button>
+                  </div>
+                ) : hasSubmitted ? (
+                  <div className="text-center text-green-400 font-medium mb-6 bg-green-500/10 py-2 rounded-lg">
+                    Score submitted successfully!
+                  </div>
+                ) : null}
+
+                <div className="space-y-2">
+                  {leaderboard.length > 0 ? leaderboard.map((entry, idx) => (
+                    <div key={idx} className={`flex justify-between items-center p-3 rounded-lg ${idx === 0 ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300' : idx === 1 ? 'bg-slate-300/10 text-slate-300' : idx === 2 ? 'bg-orange-500/10 text-orange-300' : 'bg-black/20 text-white/80'}`}>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold w-6">{idx + 1}.</span>
+                        <span className="font-medium truncate max-w-[120px]">{entry.member}</span>
+                      </div>
+                      <span className="font-bold">{entry.score} pts</span>
+                    </div>
+                  )) : (
+                    <div className="text-center text-white/50 py-4">No scores yet. Be the first!</div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
