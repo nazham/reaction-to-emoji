@@ -47,7 +47,11 @@ export function EmotionDetector() {
     if (context) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+      context.save();
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.restore();
 
       const imageUrl = canvas.toDataURL('image/png');
       setSnapshot(imageUrl);
@@ -131,8 +135,11 @@ export function EmotionDetector() {
                   onLoadedMetadata={() => {
                     videoRef.current?.play().catch(() => {});
                   }}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover -scale-x-100"
                 />
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm sm:text-base px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 z-20 shadow-lg whitespace-nowrap">
+                  <span role="img" aria-label="locked">🔒</span> 100% Private. Runs locally.
+                </div>
                 {isModelsLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
                     <p className="text-white text-sm font-semibold animate-pulse">Loading AI models...</p>

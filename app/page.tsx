@@ -2,7 +2,7 @@ import { EmotionDetector } from '@/components/EmotionDetector';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Emoji Emotion Detector',
+  title: 'React2Emoji - Private Photo Booth',
   description: 'Take a snapshot and see your emotion turned into an emoji!',
 };
 
@@ -13,7 +13,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-            Emoji Photo Booth
+            React2Emoji Photo Booth
           </h1>
           <p className="text-lg text-slate-600">
             Take a snap and see your expressions match with an emoji!
