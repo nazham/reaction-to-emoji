@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useEmotionDetection } from '@/hooks/useEmotionDetection';
 import { determineAdvancedEmoji, ExtendedEmojiType } from '@/lib/emotionEmoji';
-import { Camera, RefreshCw, Video, VideoOff } from 'lucide-react';
+import { Camera, RefreshCw, Video, VideoOff, Loader2Icon } from 'lucide-react';
 import { useWebcam } from '@/hooks/useWebcam';
 
 export function EmotionDetector() {
@@ -111,6 +111,7 @@ export function EmotionDetector() {
               onClick={toggleCamera}
               className={`p-2 rounded-full transition-colors flex items-center justify-center ${isCameraOn ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
               title={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
+              aria-label={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
             >
               {isCameraOn ? <Video size={20} /> : <VideoOff size={20} />}
             </button>
@@ -148,14 +149,14 @@ export function EmotionDetector() {
               disabled={!isVideoPlaying || isModelsLoading || isProcessing || !isCameraOn}
               className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Camera size={20} />
+              {isProcessing ? <Loader2Icon size={20} className="animate-spin" /> : <Camera size={20} />}
               {isProcessing ? 'Analyzing...' : 'Take Snapshot'}
             </button>
           </div>
         </div>
 
         {/* Snapshot View */}
-        <div className="space-y-4">
+        <div className="space-y-4" aria-live="polite">
           <h2 className="text-lg font-semibold text-slate-800 text-center">Snapshot Result</h2>
           <div className="relative w-full aspect-video bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg shadow-inner overflow-hidden flex items-center justify-center">
             {snapshot ? (
@@ -197,7 +198,8 @@ export function EmotionDetector() {
                      <button
                        onClick={handleRetake}
                        className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-full transition-colors"
-                       title="Retake"
+                       title="Retake snapshot"
+                       aria-label="Retake snapshot"
                      >
                        <RefreshCw size={18} />
                      </button>
