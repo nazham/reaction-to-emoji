@@ -1,0 +1,3 @@
+## 2024-05-14 - Accessible Icon Buttons
+**Learning:** Found several icon-only interactive elements (like the camera toggles and retake snapshot buttons) that lacked screen reader support and visible keyboard focus states. While some had `title` attributes, they were inaccessible to screen readers without an explicit `aria-label`. Moreover, the lack of `focus-visible` styling made them difficult to navigate via keyboard.
+**Action:** Always ensure that icon-only interactive buttons have a descriptive `aria-label` attribute (in addition to `title` if appropriate) and clear keyboard focus indicators like `focus-visible:ring-2 focus-visible:ring-slate-400 focus:outline-none`. This enhances accessibility for screen readers and keyboard users significantly.
