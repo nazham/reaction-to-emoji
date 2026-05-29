@@ -109,8 +109,9 @@ export function EmotionDetector() {
             <h2 className="text-lg font-semibold text-slate-800">Live Camera</h2>
             <button
               onClick={toggleCamera}
-              className={`p-2 rounded-full transition-colors flex items-center justify-center ${isCameraOn ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
+              className={`p-2 rounded-full transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400 ${isCameraOn ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
               title={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
+              aria-label={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
             >
               {isCameraOn ? <Video size={20} /> : <VideoOff size={20} />}
             </button>
@@ -146,7 +147,7 @@ export function EmotionDetector() {
             <button
               onClick={handleCapture}
               disabled={!isVideoPlaying || isModelsLoading || isProcessing || !isCameraOn}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-all shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera size={20} />
               {isProcessing ? 'Analyzing...' : 'Take Snapshot'}
@@ -196,8 +197,9 @@ export function EmotionDetector() {
                      </div>
                      <button
                        onClick={handleRetake}
-                       className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-full transition-colors"
+                       className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400"
                        title="Retake"
+                       aria-label="Retake snapshot"
                      >
                        <RefreshCw size={18} />
                      </button>
@@ -223,7 +225,7 @@ export function EmotionDetector() {
                     {!isProcessing && (
                       <button
                         onClick={handleRetake}
-                        className="text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                        className="text-sm text-blue-600 hover:text-blue-800 font-medium px-3 py-1 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
                       >
                         Try Again
                       </button>
