@@ -22,12 +22,12 @@ export default function Home() {
 
 
         <div className="flex justify-center mb-12">
-          <Link href="/challenge" className="relative group inline-flex items-center justify-center">
+          <Link href="/challenge" className="relative group inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 rounded-full">
             <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
-            <button className="relative px-8 py-4 bg-white ring-1 ring-slate-900/5 rounded-full leading-none flex items-center gap-3">
+            <div className="relative px-8 py-4 bg-white ring-1 ring-slate-900/5 rounded-full leading-none flex items-center gap-3">
               <span className="text-2xl">🎮</span>
               <span className="text-slate-900 font-bold text-lg">Play Reaction Challenge</span>
-            </button>
+            </div>
           </Link>
         </div>
 

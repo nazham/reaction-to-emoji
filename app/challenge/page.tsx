@@ -210,14 +210,14 @@ export default function ChallengePage() {
             <button
               onClick={startGame}
               disabled={!isCameraOn}
-              className="w-full max-w-xs bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 rounded-full text-xl shadow-[0_0_40px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full max-w-xs bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-4 rounded-full text-xl shadow-[0_0_40px_rgba(59,130,246,0.5)] transition-all transform hover:scale-105 flex items-center justify-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play fill="currentColor" />
               START GAME
             </button>
             <button
                onClick={toggleCamera}
-               className="mt-6 text-slate-400 hover:text-white flex items-center gap-2 transition-colors"
+               className="mt-6 text-slate-400 hover:text-white flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400 rounded"
             >
                {isCameraOn ? <VideoOff size={18} /> : <Video size={18} />}
                {isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
@@ -261,7 +261,8 @@ export default function ChallengePage() {
             <div className="absolute bottom-8 right-8 z-20">
                 <button
                  onClick={toggleCamera}
-                 className="p-4 rounded-full bg-black/40 border border-white/20 text-white backdrop-blur-md hover:bg-black/60 transition-colors"
+                 className="p-4 rounded-full bg-black/40 border border-white/20 text-white backdrop-blur-md hover:bg-black/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white"
+                 aria-label={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
                 >
                  {isCameraOn ? <VideoOff size={24} /> : <Video size={24} />}
                 </button>
@@ -283,7 +284,7 @@ export default function ChallengePage() {
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
               <button
                 onClick={handleDownloadScore}
-                className="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-4 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-white hover:bg-slate-200 text-slate-900 font-bold py-4 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white"
               >
                 <Download size={20} />
                 Download Score
@@ -291,7 +292,7 @@ export default function ChallengePage() {
 
               <button
                 onClick={resetGame}
-                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold py-4 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold py-4 px-6 rounded-2xl transition-colors flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white"
               >
                 <RotateCcw size={20} />
                 Play Again
