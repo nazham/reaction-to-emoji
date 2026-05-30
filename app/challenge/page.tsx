@@ -262,6 +262,8 @@ export default function ChallengePage() {
                 <button
                  onClick={toggleCamera}
                  className="p-4 rounded-full bg-black/40 border border-white/20 text-white backdrop-blur-md hover:bg-black/60 transition-colors"
+                 aria-label={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
+                 title={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
                 >
                  {isCameraOn ? <VideoOff size={24} /> : <Video size={24} />}
                 </button>
