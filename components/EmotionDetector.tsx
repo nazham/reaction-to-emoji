@@ -111,6 +111,7 @@ export function EmotionDetector() {
               onClick={toggleCamera}
               className={`p-2 rounded-full transition-colors flex items-center justify-center ${isCameraOn ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
               title={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
+              aria-label={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
             >
               {isCameraOn ? <Video size={20} /> : <VideoOff size={20} />}
             </button>
@@ -197,7 +198,8 @@ export function EmotionDetector() {
                      <button
                        onClick={handleRetake}
                        className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-full transition-colors"
-                       title="Retake"
+                       title="Retake snapshot"
+                       aria-label="Retake snapshot"
                      >
                        <RefreshCw size={18} />
                      </button>

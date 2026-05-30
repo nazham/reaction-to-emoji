@@ -1,0 +1,3 @@
+## 2024-05-30 - ARIA Labels on Icon-Only Custom Buttons
+**Learning:** Found an accessibility issue pattern in `EmotionDetector.tsx` and `app/challenge/page.tsx` where dynamically rendered icon-only buttons (`Video`/`VideoOff`, `RefreshCw`) lacked ARIA labels despite having `title` attributes. Tooltips alone aren't sufficient for screen reader users when toggling important interactive states like camera controls.
+**Action:** Always verify that interactive buttons consisting solely of icons (like from `lucide-react`) explicitly include descriptive, and potentially dynamic, `aria-label` properties, even if they already have `title` attributes.
